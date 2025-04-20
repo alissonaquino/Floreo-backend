@@ -43,14 +43,12 @@ export default async function oauthRoutes(fastify: FastifyInstance) {
     try {
       const { access_token } = request.body as { access_token: string };
 
-      // 1️⃣ Valida o access_token com o Supabase
       const { data: { user }, error } = await supabase.auth.getUser(access_token);
       
       if (error || !user?.email) {
         throw new Error(error?.message || 'Usuário do Google não encontrado');
       }
 
-      // 2️⃣ Cria ou atualiza o usuário no seu banco
       const dbUser = await prisma.user.upsert({
         where: { email: user.email },
         create: {
@@ -65,7 +63,6 @@ export default async function oauthRoutes(fastify: FastifyInstance) {
         }
       });
 
-      // 3️⃣ Gera o JWT da sua aplicação
       const token = fastify.jwt.sign(
         { id: dbUser.id, email: dbUser.email },
         { expiresIn: '7d' }
