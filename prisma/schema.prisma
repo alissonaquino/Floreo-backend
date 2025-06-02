@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(uuid())
+  name      String?
+  username  String?
+  email     String?
+  avatarUrl String?
+  phone     String?
+  gender    String?
+  createdAt DateTime? @db.Timestamptz(6)
+  updatedAt DateTime? @db.Timestamptz(6)
+  password  String?   @map("password")
+  devices   Device[]
+  plants    Plant[]
+
+  @@map("users")
+}
+
+model Address {
+  id      String  @id(map: "adresses_pkey") @default(uuid())
+  userId  String?
+  street  String?
+  number  BigInt?
+  city    String?
+  state   String?
+  zipCode BigInt?
+  country String?
+
+  @@map("addresses")
+}
+
+model Device {
+  id          BigInt       @id @default(autoincrement())
+  createAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  name        String?
+  numeration  String?      @unique
+  status      Boolean?
+  setup_date  DateTime?    @db.Timestamp(6)
+  userId      String?      @map("user_id")
+  User        User?        @relation(fields: [userId], references: [id])
+  plants      Plant[]
+  sensor_data SensorData[]
+
+  @@map("devices")
+}
+
+model Plant {
+  id                    BigInt                @id @default(autoincrement())
+  createdAt             DateTime              @default(now()) @db.Timestamptz(6)
+  name                  String
+  species               String
+  plantingDate          DateTime              @db.Timestamp(6)
+  status                String?
+  idealLuminosity       Float?                @db.Real
+  idealHumidity         Float?                @db.Real
+  updatedAt             DateTime?             @db.Timestamp(6)
+  deviceId              BigInt?
+  irrigationsPerDay     Int?                  @default(1) @db.SmallInt
+  idealLuminosityLx     Decimal?              @db.Decimal
+  mlPerIrrigation       Decimal?              @db.Decimal
+  minTemperatureCelsius Decimal?              @db.Decimal
+  maxTemperatureCelsius Decimal?              @db.Decimal
+  friendlyName          String?
+  imageUri              String?
+  user_id               String?
+  plant_recommendations PlantRecommendation[]
+  devices               Device?               @relation(fields: [deviceId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users                 User?                 @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sensor_data           SensorData[]
+
+  @@map("plants")
+}
+
+model SensorData {
+  id         BigInt    @id @default(autoincrement())
+  sensorType String?
+  value      Float     @db.Real
+  recordedAt DateTime? @default(now()) @db.Timestamp(6)
+  plantId    BigInt?
+  deviceId   BigInt?
+  devices    Device?   @relation(fields: [deviceId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  plants     Plant?    @relation(fields: [plantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("sensor_data")
+}
+
+model PlantRecommendation {
+  id         BigInt   @id @default(autoincrement())
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  text       String?
+  basedOn    String?
+  plantId    BigInt?
+  plants     Plant?   @relation(fields: [plantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("plant_recommendations")
+}
