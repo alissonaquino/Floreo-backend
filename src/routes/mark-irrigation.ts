@@ -40,7 +40,7 @@ export async function markIrrigationExecutedRoute(app: FastifyInstance) {
       id: z.any().transform(Number)
     })
 
-    const { id } = paramsSchema.parse(request.params)
+    const { id } = request.params
 
     const command = await prisma.deviceCommand.findUnique({ where: { id } })
 
@@ -49,7 +49,7 @@ export async function markIrrigationExecutedRoute(app: FastifyInstance) {
     }
 
     const updated = await prisma.deviceCommand.update({
-      where: { id },
+      where: { id: Number(id) },
       data: { executed: true }
     })
 
