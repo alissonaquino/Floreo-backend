@@ -20,7 +20,7 @@ export async function sensorDataRoutes(app: FastifyInstance) {
         type: "object",
         properties: {
           type: { type: "string" },
-          value: { type: ["number", "boolean"] }
+          value: { type: "number" }
         },
         required: ["type", "value"],
         additionalProperties: false
@@ -53,7 +53,7 @@ export async function sensorDataRoutes(app: FastifyInstance) {
 
     const bodySchema = z.object({
       type: z.enum(["temperature", "humiditySoil", "humidityAir", "luminosity", "relayState"]),
-      value: z.union([z.number(), z.boolean()])
+      value: z.number()
     });
 
     const headers = headerSchema.safeParse(request.headers);
@@ -85,16 +85,19 @@ export async function sensorDataRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: "No plant linked to this device" });
     }
 
-    const formattedValue = type === "relayState"
-      ? (typeof value === "boolean" ? (value ? 1 : 0) : value)
-      : value;
+    // Mapear nomes para banco
+    const sensorTypeMap: Record<string, string> = {
+      humiditySoil: "soil_humidity",
+      humidityAir: "air_humidity",
+      temperature: "temperature",
+      luminosity: "luminosity",
+      relayState: "relay_state"
+    };
 
     await prisma.sensorData.create({
       data: {
-        sensorType: type === "humiditySoil" ? "soil_humidity"
-                  : type === "humidityAir" ? "air_humidity"
-                  : type,
-        value: formattedValue,
+        sensorType: sensorTypeMap[type],
+        value,
         recordedAt: new Date(),
         deviceId: device.id,
         plantId: currentPlant.id
