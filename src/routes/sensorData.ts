@@ -20,7 +20,7 @@ export async function sensorDataRoutes(app: FastifyInstance) {
         type: "object",
         properties: {
           type: { type: "string" },
-          value: { type: "number" }
+          value: { type: ["number", "boolean"] }
         },
         required: ["type", "value"],
         additionalProperties: false
@@ -51,20 +51,21 @@ export async function sensorDataRoutes(app: FastifyInstance) {
       "x-device-numeration": z.string()
     });
 
-    const bodySchema = z.object({
-      type: z.enum(["temperature", "humiditySoil", "humidityAir", "luminosity", "relayState"]),
-      value: z.number()
-    });
+    // const bodySchema = z.object({
+    //   type: z.enum(["temperature", "humiditySoil", "humidityAir", "luminosity", "relayState"]),
+    //   value: z.union([z.number(), z.boolean()])
+    // });
 
     const headers = headerSchema.safeParse(request.headers);
-    const body = bodySchema.safeParse(request.body);
+    const body = (request.body);
+    console.log(body);
 
-    if (!headers.success || !body.success) {
+    if (!headers.success) {
       return reply.status(400).send({ error: "Invalid data format" });
     }
 
     const deviceNumeration = headers.data["x-device-numeration"];
-    const { type, value } = body.data;
+    const { type, value } = body as { type: string, value: number };
 
     const device = await prisma.device.findUnique({
       where: { numeration: deviceNumeration },
@@ -85,19 +86,12 @@ export async function sensorDataRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: "No plant linked to this device" });
     }
 
-    // Mapear nomes para banco
-    const sensorTypeMap: Record<string, string> = {
-      humiditySoil: "soil_humidity",
-      humidityAir: "air_humidity",
-      temperature: "temperature",
-      luminosity: "luminosity",
-      relayState: "relay_state"
-    };
+
 
     await prisma.sensorData.create({
       data: {
-        sensorType: sensorTypeMap[type],
-        value,
+        sensorType: type,
+        value: value,
         recordedAt: new Date(),
         deviceId: device.id,
         plantId: currentPlant.id
