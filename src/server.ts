@@ -4,6 +4,8 @@ import fastifySwaggerUi from '@fastify/swagger-ui'
 
 import { sensorDataRoutes } from './routes/sensorData'
 import { getDeviceConfigRoute } from './routes/getDeviceConfig';
+import { getIrrigationCommandRoute } from './routes/getCommandRoute';
+import { markIrrigationExecutedRoute } from './routes/mark-irrigation';
 
 const server = fastify()
 
@@ -36,6 +38,8 @@ server.get('/', async () => {
 // Registra as rotas do device com prefixo /api/devices
 server.register(sensorDataRoutes, { prefix: '/api/devices' })
 server.register(getDeviceConfigRoute, { prefix: '/api/devices' })
+server.register(getIrrigationCommandRoute, { prefix: '/api/devices' })
+server.register(markIrrigationExecutedRoute, { prefix: '/api/devices' })
 
 // Inicia o servidor
 server.listen({ port: 3000, host: '0.0.0.0' }, (err, address) => {
