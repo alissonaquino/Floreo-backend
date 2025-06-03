@@ -35,6 +35,7 @@ export async function markIrrigationExecutedRoute(app: FastifyInstance) {
       }
     }
   }, async (request, reply) => {
+    console.log(request.params)
     const paramsSchema = z.object({
       id: z.any().transform(Number)
     })
